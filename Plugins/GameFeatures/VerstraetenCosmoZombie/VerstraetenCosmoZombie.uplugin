@@ -1,0 +1,27 @@
+{
+	"FileVersion": 3,
+	"Version": 1,
+	"VersionName": "1.0",
+	"FriendlyName": "VerstraetenCosmoZombie",
+	"Description": "",
+	"Category": "Game Features",
+	"CreatedBy": "Como Verstraeten",
+	"CreatedByURL": "",
+	"DocsURL": "",
+	"MarketplaceURL": "",
+	"SupportURL": "",
+	"EnabledByDefault": false,
+	"CanContainContent": true,
+	"IsBetaVersion": false,
+	"IsExperimentalVersion": false,
+	"Installed": false,
+	"Modules": [
+		{
+			"Name": "VerstraetenCosmoZombieRuntime",
+			"Type": "Runtime",
+			"LoadingPhase": "Default"
+		}
+	],
+	"ExplicitlyLoaded": true,
+	"BuiltInInitialFeatureState": "Registered"
+}
