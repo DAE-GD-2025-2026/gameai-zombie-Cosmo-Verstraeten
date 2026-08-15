@@ -39,7 +39,8 @@ public class VerstraetenCosmoZombieRuntime : ModuleRules
 				"Slate",
 				"SlateCore",
 				"AIModule",
-				"NavigationSystem"
+				"NavigationSystem",
+				"GameAI_Zombie"
 				// ... add private dependencies that you statically link with here ...	
 			}
 			);

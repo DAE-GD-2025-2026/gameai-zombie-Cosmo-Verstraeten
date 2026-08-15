@@ -3,6 +3,10 @@
 
 #include "StudentPerceptor.h"
 
+#include "AIController.h"
+#include "BehaviorTree/BlackboardComponent.h"
+#include "Village/House/House.h"
+
 
 UStudentPerceptor::UStudentPerceptor()
 {
@@ -35,8 +39,52 @@ void UStudentPerceptor::OnPerceptionUpdated(AActor* Actor, FAIStimulus Stimulus)
 	{
 		return;
 	}
+	
+	APawn* Pawn = Cast<APawn>(GetOwner());
 
-	if (Stimulus.WasSuccessfullySensed())
+	if (!Pawn)
+	{
+		return;
+	}
+
+	AAIController* AIController =
+		Cast<AAIController>(Pawn->GetController());
+
+	if (!AIController)
+	{
+		return;
+	}
+	
+	UBlackboardComponent* Blackboard = AIController->GetBlackboardComponent();
+	
+	if (!Blackboard)
+	{
+		return;
+	}
+
+	if (!Stimulus.WasSuccessfullySensed())
+	{
+		return;
+	}
+	
+	if (!Actor->IsA<AHouse>())
+	{
+		return;
+	}
+	
+	Blackboard->SetValueAsObject(TEXT("TargetHouse"), Actor);
+
+	GEngine->AddOnScreenDebugMessage(
+-1,
+		2.f,
+		FColor::Green,
+		FString::Printf(
+			TEXT("Remembered house: %s"),
+			*Actor->GetName()
+		)
+	);
+	
+	/*if (Stimulus.WasSuccessfullySensed())
 	{
 		
 		GEngine->AddOnScreenDebugMessage(
@@ -54,5 +102,5 @@ void UStudentPerceptor::OnPerceptionUpdated(AActor* Actor, FAIStimulus Stimulus)
 			FColor::Red,
 			FString::Printf(TEXT("Lost: %s"), *Actor->GetName())
 		);
-	}
+	}*/
 }
