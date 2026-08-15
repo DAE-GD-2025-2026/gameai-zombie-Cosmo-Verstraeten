@@ -6,6 +6,7 @@
 #include "AIController.h"
 #include "BehaviorTree/BlackboardComponent.h"
 #include "Village/House/House.h"
+#include "Items/BaseItem.h"
 
 
 UStudentPerceptor::UStudentPerceptor()
@@ -40,6 +41,20 @@ void UStudentPerceptor::OnPerceptionUpdated(AActor* Actor, FAIStimulus Stimulus)
 		return;
 	}
 	
+	if (!Stimulus.WasSuccessfullySensed())
+	{
+		return;
+	}
+
+	ABaseItem* Item = Cast<ABaseItem>(Actor);
+	
+	if (Item)
+	{
+		KnownItems.AddUnique(Item);
+
+		DebugPrintKnownItems();
+	}
+	
 	APawn* Pawn = Cast<APawn>(GetOwner());
 
 	if (!Pawn)
@@ -61,11 +76,6 @@ void UStudentPerceptor::OnPerceptionUpdated(AActor* Actor, FAIStimulus Stimulus)
 	{
 		return;
 	}
-
-	if (!Stimulus.WasSuccessfullySensed())
-	{
-		return;
-	}
 	
 	if (!Actor->IsA<AHouse>())
 	{
@@ -75,7 +85,7 @@ void UStudentPerceptor::OnPerceptionUpdated(AActor* Actor, FAIStimulus Stimulus)
 	Blackboard->SetValueAsObject(TEXT("TargetHouse"), Actor);
 
 	GEngine->AddOnScreenDebugMessage(
--1,
+		-1,
 		2.f,
 		FColor::Green,
 		FString::Printf(
@@ -103,4 +113,32 @@ void UStudentPerceptor::OnPerceptionUpdated(AActor* Actor, FAIStimulus Stimulus)
 			FString::Printf(TEXT("Lost: %s"), *Actor->GetName())
 		);
 	}*/
+}
+void UStudentPerceptor::DebugPrintKnownItems() const
+{
+	GEngine->AddOnScreenDebugMessage(
+		-1,
+		3.f,
+		FColor::Yellow,
+		FString::Printf(
+			TEXT("Known Items: %d"),
+			KnownItems.Num()
+		)
+	);
+
+	for (const TObjectPtr<ABaseItem>& Item : KnownItems)
+	{
+		if (Item)
+		{
+			GEngine->AddOnScreenDebugMessage(
+				-1,
+				3.f,
+				FColor::Green,
+				FString::Printf(
+					TEXT(" - %s"),
+					*Item->GetName()
+				)
+			);
+		}
+	}
 }
