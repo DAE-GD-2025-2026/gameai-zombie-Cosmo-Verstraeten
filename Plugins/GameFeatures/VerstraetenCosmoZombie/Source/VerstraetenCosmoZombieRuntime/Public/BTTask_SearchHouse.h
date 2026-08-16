@@ -22,7 +22,7 @@ protected:
 
 private:
 
-	float RotationSpeed{ 180.f };
+	float RotationSpeed{ 360.f };
 
 	float DegreesRotated{ 0.f };
 };
