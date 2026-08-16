@@ -31,6 +31,30 @@ public:
 		return KnownItems;
 	}
 	
+	const TArray<TObjectPtr<AActor>>& GetKnownHouses() const
+	{
+		return KnownHouses;
+	}
+
+
+	bool IsHouseSearched(AActor* House) const
+	{
+		return SearchedHouses.Contains(House);
+	}
+	
+	bool HasUnsearchedHouse() const;
+
+	
+	void MarkHouseSearched(AActor* House)
+	{
+		if (!House)
+		{
+			return;
+		}
+
+		SearchedHouses.AddUnique(House);
+	}
+	
 	void ForgetItem(ABaseItem* Item);
 	
 private:
@@ -39,5 +63,11 @@ private:
 
 	UPROPERTY()
 	TArray<TObjectPtr<ABaseItem>> KnownItems{};
+	
+	UPROPERTY()
+	TArray<TObjectPtr<AActor>> KnownHouses{};
+
+	UPROPERTY()
+	TArray<TObjectPtr<AActor>> SearchedHouses{};
 
 };

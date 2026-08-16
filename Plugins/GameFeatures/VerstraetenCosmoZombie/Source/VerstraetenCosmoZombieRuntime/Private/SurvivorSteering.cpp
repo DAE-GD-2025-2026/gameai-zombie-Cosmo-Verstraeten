@@ -88,13 +88,10 @@ void USurvivorSteering::CreateNewWanderPath()
 	}
 
 
-	const FVector CircleCenter =
-		CachedPawn->GetActorLocation()
-		+ MovementDirection * WanderDistance;
+	const FVector CircleCenter = CachedPawn->GetActorLocation() + MovementDirection * WanderDistance;
 
 
-	WanderAngle +=
-		FMath::DegreesToRadians(FMath::FRandRange(-MaxWanderAngleChange, MaxWanderAngleChange));
+	WanderAngle += FMath::DegreesToRadians(FMath::FRandRange(-MaxWanderAngleChange, MaxWanderAngleChange));
 
 	const FVector CircleOffset
 	{

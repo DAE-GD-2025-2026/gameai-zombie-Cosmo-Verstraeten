@@ -82,17 +82,20 @@ void UStudentPerceptor::OnPerceptionUpdated(AActor* Actor, FAIStimulus Stimulus)
 		return;
 	}
 	
-	Blackboard->SetValueAsObject(TEXT("TargetHouse"), Actor);
-
+	KnownHouses.AddUnique(Actor);
+	
+	Blackboard->SetValueAsBool(TEXT("HasKnownHouse"),true);
+	
 	GEngine->AddOnScreenDebugMessage(
-		-1,
-		2.f,
-		FColor::Green,
-		FString::Printf(
-			TEXT("Remembered house: %s"),
-			*Actor->GetName()
-		)
-	);
+	-1,
+	3.f,
+	FColor::Green,
+	FString::Printf(
+		TEXT("Remembered house: %s | Known Houses: %d"),
+		*Actor->GetName(),
+		KnownHouses.Num()
+	)
+);
 	
 	/*if (Stimulus.WasSuccessfullySensed())
 	{
@@ -154,4 +157,22 @@ void UStudentPerceptor::DebugPrintKnownItems() const
 			);
 		}
 	}
+}
+
+bool UStudentPerceptor::HasUnsearchedHouse() const
+{
+	for (const TObjectPtr<AActor>& House : KnownHouses)
+	{
+		if (!House)
+		{
+			continue;
+		}
+
+		if (!SearchedHouses.Contains(House))
+		{
+			return true;
+		}
+	}
+
+	return false;
 }
