@@ -114,6 +114,19 @@ void UStudentPerceptor::OnPerceptionUpdated(AActor* Actor, FAIStimulus Stimulus)
 		);
 	}*/
 }
+
+
+void UStudentPerceptor::ForgetItem(ABaseItem* Item)
+{
+	if (!Item)
+	{
+		return;
+	}
+
+	KnownItems.Remove(Item);
+}
+
+
 void UStudentPerceptor::DebugPrintKnownItems() const
 {
 	GEngine->AddOnScreenDebugMessage(

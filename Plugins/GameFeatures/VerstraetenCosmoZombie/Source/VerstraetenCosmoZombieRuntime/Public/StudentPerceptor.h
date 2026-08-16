@@ -31,6 +31,8 @@ public:
 		return KnownItems;
 	}
 	
+	void ForgetItem(ABaseItem* Item);
+	
 private:
 	
 	void DebugPrintKnownItems() const;
