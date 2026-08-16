@@ -7,6 +7,7 @@
 #include "BehaviorTree/BlackboardComponent.h"
 #include "Village/House/House.h"
 #include "Items/BaseItem.h"
+#include "Zombies/BaseZombie.h"
 
 
 UStudentPerceptor::UStudentPerceptor()
@@ -26,21 +27,23 @@ void UStudentPerceptor::BeginPlay()
 
 void UStudentPerceptor::OnPerceptionUpdated(AActor* Actor, FAIStimulus Stimulus)
 {
-	/*GEngine->AddOnScreenDebugMessage(5, 1.f, FColor::Green, 
-	FString::Printf(TEXT("Saw Something!")));*/
-	
-	/*GEngine->AddOnScreenDebugMessage(
-	-1,
-	2.f,
-	FColor::Green,
-	FString::Printf(TEXT("Perceived: %s"), *Actor->GetName()));*/
-	
-	
 	if (!Actor)
 	{
 		return;
 	}
+
 	
+	// ZOMBIES
+	ABaseZombie* Zombie = Cast<ABaseZombie>(Actor);
+
+	if (Zombie)
+	{
+		HandleZombiePerception(Zombie, Stimulus);
+		return;
+	}
+
+
+
 	if (!Stimulus.WasSuccessfullySensed())
 	{
 		return;
@@ -52,7 +55,7 @@ void UStudentPerceptor::OnPerceptionUpdated(AActor* Actor, FAIStimulus Stimulus)
 	{
 		KnownItems.AddUnique(Item);
 
-		DebugPrintKnownItems();
+		//DebugPrintKnownItems();
 	}
 	
 	APawn* Pawn = Cast<APawn>(GetOwner());
@@ -62,8 +65,7 @@ void UStudentPerceptor::OnPerceptionUpdated(AActor* Actor, FAIStimulus Stimulus)
 		return;
 	}
 
-	AAIController* AIController =
-		Cast<AAIController>(Pawn->GetController());
+	AAIController* AIController = Cast<AAIController>(Pawn->GetController());
 
 	if (!AIController)
 	{
@@ -97,25 +99,6 @@ void UStudentPerceptor::OnPerceptionUpdated(AActor* Actor, FAIStimulus Stimulus)
 	)
 );
 	
-	/*if (Stimulus.WasSuccessfullySensed())
-	{
-		
-		GEngine->AddOnScreenDebugMessage(
-			-1,
-			2.f,
-			FColor::Green,
-			FString::Printf(TEXT("Detected: %s"), *Actor->GetName())
-		);
-	}
-	else
-	{
-		GEngine->AddOnScreenDebugMessage(
-			-1,
-			2.f,
-			FColor::Red,
-			FString::Printf(TEXT("Lost: %s"), *Actor->GetName())
-		);
-	}*/
 }
 
 
@@ -175,4 +158,69 @@ bool UStudentPerceptor::HasUnsearchedHouse() const
 	}
 
 	return false;
+}
+
+void UStudentPerceptor::HandleZombiePerception(ABaseZombie* Zombie, const FAIStimulus& Stimulus)
+{
+	if (!Zombie)
+	{
+		return;
+	}
+
+
+	APawn* Pawn = Cast<APawn>(GetOwner());
+
+	if (!Pawn)
+	{
+		return;
+	}
+
+
+	AAIController* AIController = Cast<AAIController>(Pawn->GetController());
+
+	if (!AIController)
+	{
+		return;
+	}
+
+
+	UBlackboardComponent* Blackboard = AIController->GetBlackboardComponent();
+
+	if (!Blackboard)
+	{
+		return;
+	}
+	
+	if (Stimulus.WasSuccessfullySensed())
+	{
+		VisibleEnemies.AddUnique(Zombie);
+
+		Blackboard->SetValueAsBool(TEXT("HasVisibleZombie"),true);
+
+
+		GEngine->AddOnScreenDebugMessage(
+			-1,
+			2.f,
+			FColor::Red,
+			FString::Printf(
+				TEXT("Zombie seen: %s | Visible: %d"),
+				*Zombie->GetName(),
+				VisibleEnemies.Num()));
+	}
+	else
+	{
+		VisibleEnemies.Remove(Zombie);
+		
+		Blackboard->SetValueAsBool(TEXT("HasVisibleZombie"),VisibleEnemies.Num() > 0);
+
+
+		GEngine->AddOnScreenDebugMessage(
+			-1,
+			2.f,
+			FColor::Yellow,
+			FString::Printf(
+				TEXT("Zombie lost: %s | Visible: %d"),
+				*Zombie->GetName(),
+				VisibleEnemies.Num()));
+	}
 }

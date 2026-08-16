@@ -11,7 +11,7 @@
 #include "StudentPerceptor.generated.h"
 
 class ABaseItem;
-
+class ABaseZombie;
 UCLASS(ClassGroup=(Custom), meta=(BlueprintSpawnableComponent))
 class VERSTRAETENCOSMOZOMBIERUNTIME_API UStudentPerceptor : public UActorComponent
 {
@@ -56,10 +56,18 @@ public:
 	}
 	
 	void ForgetItem(ABaseItem* Item);
+
+	const TArray<TObjectPtr<ABaseZombie>>& GetVisibleEnemies() const
+	{
+		return VisibleEnemies;
+	}
+
 	
 private:
 	
 	void DebugPrintKnownItems() const;
+	
+	void HandleZombiePerception(ABaseZombie* Zombie, const FAIStimulus& Stimulus);
 
 	UPROPERTY()
 	TArray<TObjectPtr<ABaseItem>> KnownItems{};
@@ -69,5 +77,8 @@ private:
 
 	UPROPERTY()
 	TArray<TObjectPtr<AActor>> SearchedHouses{};
+	
+	UPROPERTY()
+	TArray<TObjectPtr<ABaseZombie>> VisibleEnemies{};
 
 };
