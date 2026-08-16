@@ -28,13 +28,25 @@ EBTNodeResult::Type UBTTask_Wander::ExecuteTask(UBehaviorTreeComponent& OwnerCom
 		return EBTNodeResult::Failed;
 	}
 
-	USurvivorSteering* SteeringComponent = Pawn->FindComponentByClass<USurvivorSteering>();
+	USurvivorSteering* Steering = Pawn->FindComponentByClass<USurvivorSteering>();
 
-	if (!SteeringComponent)
+	if (!Steering)
 	{
 
 		return EBTNodeResult::Failed;
 	}
+
+	
+	FSteeringWeights Weights{};
+
+	Weights.Wander = 1.f;
+	Weights.Seek = 0.f;
+	
+	Steering->SetTargetActor(nullptr);
+
+	Steering->SetSteeringWeights(Weights);
+
+	Steering->StartSteering();
 
 	
 	GEngine->AddOnScreenDebugMessage(
@@ -43,8 +55,6 @@ EBTNodeResult::Type UBTTask_Wander::ExecuteTask(UBehaviorTreeComponent& OwnerCom
 		FColor::Green,
 		TEXT("STARTING WANDER")
 	);
-	
-	SteeringComponent->StartWander();
 
 	return EBTNodeResult::InProgress;
 }
@@ -66,11 +76,11 @@ EBTNodeResult::Type UBTTask_Wander::AbortTask(UBehaviorTreeComponent& OwnerComp,
 		return EBTNodeResult::Aborted;
 	}
 
-	USurvivorSteering* SteeringComponent = Pawn->FindComponentByClass<USurvivorSteering>();
+	USurvivorSteering* Steering = Pawn->FindComponentByClass<USurvivorSteering>();
 
-	if (SteeringComponent)
+	if (Steering)
 	{
-		SteeringComponent->StopSteering();
+		Steering->StopSteering();
 	}
 
 	return EBTNodeResult::Aborted;
