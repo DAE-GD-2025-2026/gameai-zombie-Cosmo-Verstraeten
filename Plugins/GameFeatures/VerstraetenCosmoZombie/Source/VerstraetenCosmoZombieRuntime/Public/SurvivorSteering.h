@@ -6,13 +6,14 @@
 
 class ASurvivorPawn;
 class AActor;
+class UStudentPerceptor;
+
 
 
 USTRUCT(BlueprintType)
 struct FSteeringWeights
 {
 	GENERATED_BODY()
-
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	float Wander{ 0.f };
@@ -20,9 +21,15 @@ struct FSteeringWeights
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	float Seek{ 0.f };
 
-	//float Flee{ 0.f };
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	float Avoid{0.f};
+};
 
-	//float Pursuit{ 0.f };
+struct FAvoidZone
+{
+	TWeakObjectPtr<AActor> Actor{};
+
+	float Radius{0.f};
 };
 UCLASS(ClassGroup = (Custom), meta = (BlueprintSpawnableComponent))
 class VERSTRAETENCOSMOZOMBIERUNTIME_API USurvivorSteering : public UActorComponent
@@ -33,13 +40,14 @@ public:
 	USurvivorSteering();
 	
 	void SetTargetActor(AActor* Target);
-	//void SetThreatActor(AActor* Threat);
-
+	void SetTargetLocation(const FVector& Location);
+	FVector GetTargetLocation() const;
 	void SetSteeringWeights(const FSteeringWeights& Weights);
+	void CreatePathToTarget();
 
 	void StartSteering();
 	void StopSteering();
-	
+
 	FVector GetMovementDirection() const
 	{
 		return MovementDirection;
@@ -48,24 +56,19 @@ public:
 protected:
 	virtual void BeginPlay() override;
 
-	virtual void TickComponent(
-		float DeltaTime,
-		ELevelTick TickType,
-		FActorComponentTickFunction* ThisTickFunction) override;
+	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 	
 
 private:
-	void CreatePathToTarget();
-	
 	FVector CalculateWanderDirection(float DeltaTime);
-
 	FVector CalculateSeekDirection();
 	void CreateNewWanderPath();
+	FVector CalculateAvoidDirection() const;
+	FVector CalculateBlendedIntent() const;
 	void CalculateAngularVelocity(const FVector& DesiredDirection);
-	
-	FVector FollowPath(
-	TArray<FVector>& Path,
-	int32& PathPointIndex);
+	void CreateBlendedPath();
+	FVector CalculateBlendedDirection(float DeltaTime);
+	FVector FollowPath(TArray<FVector>& Path, int32& PathPointIndex, bool bFinishAtLastPoint);
 	
 	
 	UPROPERTY()
@@ -98,7 +101,7 @@ private:
 	//seek
 	TArray<FVector> CurrentPath{};
 	int32 CurrentPathPointIndex{ 0 };
-	float PathPointAcceptanceRadius{ 5.f };
+	float PathPointAcceptanceRadius{ 50.f };
 	
 	float AngularVelocity{ 0.f };
 
@@ -110,5 +113,22 @@ private:
 
 	TArray<FVector> WanderPath{};
 	int32 WanderPathPointIndex{ 0 };
+	
+	TArray<FVector> BlendedPath{};
+	int32 BlendedPathPointIndex{0};
+	float BlendedRepathTimer{0.f};
+	
+	UPROPERTY(EditAnywhere, Category = "Steering")
+	float BlendedRepathInterval{0.2f};
+	UPROPERTY(EditAnywhere, Category = "Steering")
+	float BlendedMoveDistance{400.f};
+	UPROPERTY(EditAnywhere, Category = "Steering|Avoid")
+	float AvoidDistance{800.f};
+
+	FVector TargetLocation{};
+	bool bUseTargetLocation{false};
+	
+	UPROPERTY(EditAnywhere, Category = "Debug")
+	bool bDrawPath{true};
 	
 };
