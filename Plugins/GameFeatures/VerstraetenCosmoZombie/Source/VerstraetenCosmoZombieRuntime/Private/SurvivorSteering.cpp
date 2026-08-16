@@ -5,6 +5,7 @@
 #include "DrawDebugHelpers.h"
 
 #include "Camera/PlayerCameraManager.h"
+#include "GameFramework/FloatingPawnMovement.h"
 
 USurvivorSteering::USurvivorSteering()
 {
@@ -28,6 +29,15 @@ void USurvivorSteering::BeginPlay()
 	MovementDirection.Normalize();
 	
 	WanderAngle = FMath::DegreesToRadians(MovementDirection.Rotation().Yaw);
+	
+	
+	UFloatingPawnMovement* PawnMovement = CachedPawn->FindComponentByClass<UFloatingPawnMovement>();
+
+	if (PawnMovement)
+	{
+		PawnMovement->AddTickPrerequisiteComponent(this);
+	}
+	
 }
 
 void USurvivorSteering::SetTargetActor(AActor* Target)
@@ -157,10 +167,12 @@ void USurvivorSteering::TickComponent(float DeltaTime,ELevelTick TickType, FActo
 
 	MovementDirection = FinalDirection;
 	CalculateAngularVelocity(MovementDirection);
-	CachedPawn->AddMovementInput(MovementDirection,1.f);
-	
+
 	const float RotationThisFrame = AngularVelocity * DeltaTime;
 	CachedPawn->AddActorWorldRotation(FRotator(0.f, RotationThisFrame,0.f));
+	CachedPawn->AddMovementInput(MovementDirection,1.f);
+
+
 	
 }
 
