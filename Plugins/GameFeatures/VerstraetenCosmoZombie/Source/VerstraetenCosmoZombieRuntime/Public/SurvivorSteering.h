@@ -39,6 +39,11 @@ public:
 
 	void StartSteering();
 	void StopSteering();
+	
+	FVector GetMovementDirection() const
+	{
+		return MovementDirection;
+	}
 
 protected:
 	virtual void BeginPlay() override;
@@ -64,6 +69,8 @@ private:
 	TObjectPtr<AActor> TargetActor{ nullptr };
 	FSteeringWeights CurrentWeights{};
 	FVector MovementDirection{ FVector::ForwardVector };
+	
+	
 
 	//wander 
 	float WanderDistance{ 150.f };
@@ -73,7 +80,7 @@ private:
 	float WanderAngularVelocity{ 0.f };
 	float WanderChangeTimer{ 0.f };
 	float WanderChangeInterval{ 0.4f };
-	float MaxWanderAngularVelocity{ 60.f };
+	float MaxWanderAngularVelocity{ 90.f };
 	
 	//seek
 	TArray<FVector> CurrentPath{};

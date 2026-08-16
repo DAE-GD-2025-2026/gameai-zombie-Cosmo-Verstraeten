@@ -81,10 +81,20 @@ EBTNodeResult::Type UBTTask_Seek::ExecuteTask(UBehaviorTreeComponent& OwnerComp,
 
 void UBTTask_Seek::TickTask(UBehaviorTreeComponent& OwnerComp,  uint8* NodeMemory, float DeltaSeconds)
 {
+	GEngine->AddOnScreenDebugMessage(
+	-1,
+	0.f,
+	FColor::Yellow,
+	TEXT("SEEK TICK"));
+	
 	AAIController* AIController = OwnerComp.GetAIOwner();
 
 	if (!AIController)
 	{
+		UE_LOG(
+	LogTemp,
+	Error,
+	TEXT("SEEK FINISHED: NO AI CONTROLLER"));
 		FinishLatentTask(OwnerComp, EBTNodeResult::Failed);
 
 		return;
@@ -95,6 +105,11 @@ void UBTTask_Seek::TickTask(UBehaviorTreeComponent& OwnerComp,  uint8* NodeMemor
 
 	if (!Pawn)
 	{
+		
+		UE_LOG(
+	LogTemp,
+	Error,
+	TEXT("SEEK FINISHED: NO Pawnnn CONTROLLER"));
 		FinishLatentTask(OwnerComp, EBTNodeResult::Failed);
 		return;
 	}
@@ -104,6 +119,10 @@ void UBTTask_Seek::TickTask(UBehaviorTreeComponent& OwnerComp,  uint8* NodeMemor
 
 	if (!Blackboard)
 	{
+		UE_LOG(
+	LogTemp,
+	Error,
+	TEXT("SEEK FINISHED: NO blackbo CONTROLLER"));
 		FinishLatentTask(OwnerComp, EBTNodeResult::Failed);
 		return;
 	}
@@ -113,6 +132,10 @@ void UBTTask_Seek::TickTask(UBehaviorTreeComponent& OwnerComp,  uint8* NodeMemor
 
 	if (!TargetActor)
 	{
+		UE_LOG(
+	LogTemp,
+	Error,
+	TEXT("SEEK FINISHED: NO targetact CONTROLLER"));
 		FinishLatentTask(OwnerComp, EBTNodeResult::Failed);
 		return;
 	}
@@ -121,8 +144,18 @@ void UBTTask_Seek::TickTask(UBehaviorTreeComponent& OwnerComp,  uint8* NodeMemor
 	const float DistanceToTarget = FVector::Dist2D(Pawn->GetActorLocation(), TargetActor->GetActorLocation());
 
 
+	UE_LOG(
+		LogTemp,
+		Warning,
+		TEXT("Seek distance: %f | Acceptance: %f"),
+		DistanceToTarget,
+		AcceptanceRadius);
 	if (DistanceToTarget <= AcceptanceRadius)
 	{
+		UE_LOG(
+	LogTemp,
+	Error,
+	TEXT("SEEK SUCCEEDED: INSIDE ACCEPTANCE RADIUS"));
 		USurvivorSteering* Steering = Pawn->FindComponentByClass<USurvivorSteering>();
 
 		if (Steering)
@@ -137,6 +170,13 @@ void UBTTask_Seek::TickTask(UBehaviorTreeComponent& OwnerComp,  uint8* NodeMemor
 
 EBTNodeResult::Type UBTTask_Seek::AbortTask(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory)
 {
+	
+	
+	UE_LOG(
+		LogTemp,
+		Error,
+		TEXT("SEEK WAS ABORTED"));
+	
 	AAIController* AIController = OwnerComp.GetAIOwner();
 
 	if (AIController)

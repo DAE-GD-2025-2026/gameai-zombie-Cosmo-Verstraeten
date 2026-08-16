@@ -4,6 +4,8 @@
 
 #include "DrawDebugHelpers.h"
 
+#include "Camera/PlayerCameraManager.h"
+
 USurvivorSteering::USurvivorSteering()
 {
 	PrimaryComponentTick.bCanEverTick = true;
@@ -175,8 +177,12 @@ void USurvivorSteering::TickComponent(
 		FinalDirection.Normalize();
 
 		MovementDirection = FinalDirection;
+		
+		FRotator NewRotation = CachedPawn->GetActorRotation();
+		NewRotation.Yaw = MovementDirection.Rotation().Yaw;
 
 		CachedPawn->AddMovementInput(MovementDirection,1.f);
+		CachedPawn->SetActorRotation(NewRotation);
 	}
 }
 
