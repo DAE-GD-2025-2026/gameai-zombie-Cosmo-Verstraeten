@@ -6,8 +6,7 @@
 #include "BTTask_GrabItem.generated.h"
 
 UCLASS()
-class VERSTRAETENCOSMOZOMBIERUNTIME_API UBTTask_GrabItem
-	: public UBTTaskNode
+class VERSTRAETENCOSMOZOMBIERUNTIME_API UBTTask_GrabItem : public UBTTaskNode
 {
 	GENERATED_BODY()
 

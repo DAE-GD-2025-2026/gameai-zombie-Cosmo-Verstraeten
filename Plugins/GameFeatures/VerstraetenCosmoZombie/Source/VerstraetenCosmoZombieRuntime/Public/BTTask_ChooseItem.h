@@ -24,6 +24,13 @@ protected:
 	UPROPERTY(EditAnywhere, Category = "Blackboard")
 	FBlackboardKeySelector TargetItemKey;
 	
+	UPROPERTY(EditAnywhere, Category = "Utility")
+	float DistancePenalty{0.05f};
+
+	UPROPERTY(EditAnywhere, Category = "Utility")
+	float GarbageCleanupScore{-1000.f};
+	
+	
 private:
 	
 	float CalculateItemScore(APawn* Pawn, ABaseItem* Item) const;

@@ -7,6 +7,7 @@
 #include "StudentPerceptor.h"
 
 #include "Items/BaseItem.h"
+#include "SurvivorInventoryLogic.h"
 
 UBTTask_GrabItem::UBTTask_GrabItem()
 {
@@ -21,90 +22,63 @@ UBTTask_GrabItem::UBTTask_GrabItem()
 }
 
 
-EBTNodeResult::Type UBTTask_GrabItem::ExecuteTask(UBehaviorTreeComponent& OwnerComp,uint8* NodeMemory)
+
+EBTNodeResult::Type UBTTask_GrabItem::ExecuteTask(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory)
 {
 	AAIController* AIController = OwnerComp.GetAIOwner();
-
+	
 	if (!AIController)
 	{
 		return EBTNodeResult::Failed;
 	}
-
+	
 	APawn* Pawn = AIController->GetPawn();
 
 	if (!Pawn)
 	{
 		return EBTNodeResult::Failed;
 	}
-
-
+	
 	UBlackboardComponent* Blackboard = OwnerComp.GetBlackboardComponent();
 
 	if (!Blackboard)
 	{
 		return EBTNodeResult::Failed;
 	}
-
-
-	UObject* TargetObject = Blackboard->GetValueAsObject(TargetItemKey.SelectedKeyName);
-
-	ABaseItem* Item = Cast<ABaseItem>(TargetObject);
-
-	if (!Item)
-	{
-		return EBTNodeResult::Failed;
-	}
-
-
-	UInventoryComponent* Inventory = Pawn->FindComponentByClass<UInventoryComponent>();
-
-	if (!Inventory)
-	{
-		return EBTNodeResult::Failed;
-	}
 	
-	const float Distance =
-	FVector::Dist(Pawn->GetActorLocation(), Item->GetActorLocation());
+	ABaseItem* TargetItem = Cast<ABaseItem>(Blackboard->GetValueAsObject(TargetItemKey.SelectedKeyName));
 
-
-	if (Distance > Inventory->GetPickupRange())
-	{
-		return EBTNodeResult::Failed;
-	}
-	
-	const TArray<ABaseItem*>& InventoryItems = Inventory->GetInventory();
-
-	int32 FreeSlot = INDEX_NONE;
-
-	for (int32 Index = 0; Index < InventoryItems.Num(); ++Index)
-	{
-		if (!InventoryItems[Index])
-		{
-			FreeSlot = Index;
-			break;
-		}
-	}
-	
-	if (FreeSlot == INDEX_NONE)
+	if (!IsValid(TargetItem))
 	{
 		Blackboard->ClearValue(TargetItemKey.SelectedKeyName);
-
 		return EBTNodeResult::Failed;
 	}
-	
-	const bool Grabbed = Inventory->GrabItem(FreeSlot, Item);
 
-	if (!Grabbed)
+
+	USurvivorInventoryLogic* InventoryLogic = Pawn->FindComponentByClass<USurvivorInventoryLogic>();
+
+	if (!InventoryLogic)
 	{
 		return EBTNodeResult::Failed;
 	}
-	
+
+
 	UStudentPerceptor* Perceptor = Pawn->FindComponentByClass<UStudentPerceptor>();
 
-	if (Perceptor)
+	if (!Perceptor)
 	{
-		Perceptor->ForgetItem(Item);
+		return EBTNodeResult::Failed;
 	}
+	
+	const bool bGrabbed = InventoryLogic->TryGrabItem(TargetItem);
+
+
+	if (!bGrabbed)
+	{
+		return EBTNodeResult::Failed;
+	}
+
+	Perceptor->ForgetItem(TargetItem);
 	
 	Blackboard->ClearValue(TargetItemKey.SelectedKeyName);
 
