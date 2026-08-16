@@ -6,6 +6,8 @@
 #include "BehaviorTree/BehaviorTreeTypes.h"
 #include "BTTask_ChooseItem.generated.h"
 
+class ABaseItem;
+
 UCLASS()
 class VERSTRAETENCOSMOZOMBIERUNTIME_API UBTTask_ChooseItem : public UBTTaskNode
 {
@@ -21,4 +23,9 @@ protected:
 
 	UPROPERTY(EditAnywhere, Category = "Blackboard")
 	FBlackboardKeySelector TargetItemKey;
+	
+private:
+	
+	float CalculateItemScore(APawn* Pawn, ABaseItem* Item) const;
+	
 };
