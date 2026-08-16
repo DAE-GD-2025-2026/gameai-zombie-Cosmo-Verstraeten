@@ -46,16 +46,25 @@ private:
 	TObjectPtr<APawn> CachedPawn{ nullptr };
 
 
-	float WanderDistance{ 40.f };
+	float WanderDistance{ 150.f };
 
-	float WanderRadius{ 20.f };
+	float WanderRadius{ 50.f };
 
-	float MaxAngleChangePerSecond{ 90.f };
+	float MaxAngleChangePerSecond{ 120.f };
 	
 	float WanderAngle{ 0.f };
 
 	
-	float MaxAngularVelocity{ 40.f };
+	float MaxAngularVelocity{ 60.f };
+	
+	float WanderAngularVelocity{ 0.f };
+	float WanderChangeTimer{ 0.f };
+
+	UPROPERTY(EditAnywhere, Category = "Steering|Wander")
+	float WanderChangeInterval{ 0.4f };
+
+	UPROPERTY(EditAnywhere, Category = "Steering|Wander")
+	float MaxWanderAngularVelocity{ 60.f };
 	
 	FVector MovementDirection{ FVector::ForwardVector };
 };
