@@ -60,7 +60,13 @@ private:
 	FVector CalculateWanderDirection(float DeltaTime);
 
 	FVector CalculateSeekDirection();
-
+	void CreateNewWanderPath();
+	void CalculateAngularVelocity(const FVector& DesiredDirection);
+	
+	FVector FollowPath(
+	TArray<FVector>& Path,
+	int32& PathPointIndex);
+	
 	
 	UPROPERTY()
 	TObjectPtr<ASurvivorPawn> CachedPawn{ nullptr };
@@ -80,10 +86,29 @@ private:
 	float WanderAngularVelocity{ 0.f };
 	float WanderChangeTimer{ 0.f };
 	float WanderChangeInterval{ 0.4f };
-	float MaxWanderAngularVelocity{ 90.f };
+	float MaxWanderAngleChange{ 90.f };
+	
+	float WanderGoalChangeInterval{ 1.5f };
+
+	float WanderGoalTimer{ 0.f };
+
+	FVector CurrentWanderGoal{};
+
 	
 	//seek
 	TArray<FVector> CurrentPath{};
 	int32 CurrentPathPointIndex{ 0 };
 	float PathPointAcceptanceRadius{ 5.f };
+	
+	float AngularVelocity{ 0.f };
+
+	float MaxAngularVelocity{ 360.f };
+	
+	
+	TArray<FVector> SeekPath{};
+	int32 SeekPathPointIndex{ 0 };
+
+	TArray<FVector> WanderPath{};
+	int32 WanderPathPointIndex{ 0 };
+	
 };

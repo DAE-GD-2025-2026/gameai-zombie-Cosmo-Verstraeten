@@ -57,8 +57,11 @@ void USurvivorSteering::StopSteering()
 	CurrentWeights = FSteeringWeights{};
 
 	TargetActor = nullptr;
-	CurrentPath.Empty();
-	CurrentPathPointIndex = 0;
+	SeekPath.Empty();
+	SeekPathPointIndex = 0;
+
+	WanderPath.Empty();
+	WanderPathPointIndex = 0;
 
 	SetComponentTickEnabled(false);
 }
@@ -66,24 +69,32 @@ void USurvivorSteering::StopSteering()
 
 FVector USurvivorSteering::CalculateWanderDirection(float DeltaTime)
 {
+	if (!WanderPath.IsValidIndex(
+		WanderPathPointIndex))
+	{
+		CreateNewWanderPath();
+	}
+
+	return FollowPath(
+		WanderPath,
+		WanderPathPointIndex);
+}
+
+void USurvivorSteering::CreateNewWanderPath()
+{
 	if (!CachedPawn)
 	{
-		return FVector::ZeroVector;
-	}
-	
-	WanderChangeTimer -= DeltaTime;
-	if (WanderChangeTimer <= 0.f)
-	{
-		WanderChangeTimer = WanderChangeInterval;
-
-		WanderAngularVelocity = FMath::FRandRange(-MaxWanderAngularVelocity, MaxWanderAngularVelocity);
+		return;
 	}
 
 
-	WanderAngle += FMath::DegreesToRadians(WanderAngularVelocity) * DeltaTime;
+	const FVector CircleCenter =
+		CachedPawn->GetActorLocation()
+		+ MovementDirection * WanderDistance;
 
 
-	const FVector CircleCenter = CachedPawn->GetActorLocation() + MovementDirection * WanderDistance;
+	WanderAngle +=
+		FMath::DegreesToRadians(FMath::FRandRange(-MaxWanderAngleChange, MaxWanderAngleChange));
 
 	const FVector CircleOffset
 	{
@@ -96,55 +107,23 @@ FVector USurvivorSteering::CalculateWanderDirection(float DeltaTime)
 	const FVector WanderTarget = CircleCenter + CircleOffset;
 
 
-	FVector WanderDirection = WanderTarget - CachedPawn->GetActorLocation();
-	WanderDirection.Z = 0.f;
+	WanderPath = CachedPawn->CalculatePath(WanderTarget);
 
-	return WanderDirection.GetSafeNormal();
+
+	WanderPathPointIndex = 0;
+
+	if (WanderPath.Num() > 1)
+	{
+		WanderPathPointIndex = 1;
+	}
 }
 
 FVector USurvivorSteering::CalculateSeekDirection()
 {
-	if (!CachedPawn)
-	{
-		return FVector::ZeroVector;
-	}
-
-	if (!CurrentPath.IsValidIndex(CurrentPathPointIndex))
-	{
-		return FVector::ZeroVector;
-	}
-	
-	const FVector CurrentPathPoint = CurrentPath[CurrentPathPointIndex];
-
-	const float DistanceToPathPoint = FVector::Dist2D(CachedPawn->GetActorLocation(), CurrentPathPoint);
-
-
-	if (DistanceToPathPoint <= PathPointAcceptanceRadius)
-	{
-		++CurrentPathPointIndex;
-	}
-
-
-	if (!CurrentPath.IsValidIndex(CurrentPathPointIndex))
-	{
-		return FVector::ZeroVector;
-	}
-
-
-	const FVector TargetPathPoint = CurrentPath[CurrentPathPointIndex];
-
-
-	FVector SeekDirection = TargetPathPoint - CachedPawn->GetActorLocation();
-
-	SeekDirection.Z = 0.f;
-	
-	return SeekDirection.GetSafeNormal();
+	return FollowPath(SeekPath, SeekPathPointIndex);
 }
 
-void USurvivorSteering::TickComponent(
-	float DeltaTime,
-	ELevelTick TickType,
-	FActorComponentTickFunction* ThisTickFunction)
+void USurvivorSteering::TickComponent(float DeltaTime,ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
 {
 	Super::TickComponent(
 		DeltaTime,
@@ -172,35 +151,105 @@ void USurvivorSteering::TickComponent(
 		FinalDirection += SeekDirection * CurrentWeights.Seek;
 	}
 	
-	if (!FinalDirection.IsNearlyZero())
+	if (FinalDirection.IsNearlyZero())
 	{
-		FinalDirection.Normalize();
-
-		MovementDirection = FinalDirection;
-		
-		FRotator NewRotation = CachedPawn->GetActorRotation();
-		NewRotation.Yaw = MovementDirection.Rotation().Yaw;
-
-		CachedPawn->AddMovementInput(MovementDirection,1.f);
-		CachedPawn->SetActorRotation(NewRotation);
+		return;
 	}
+	
+	FinalDirection.Normalize();
+
+	MovementDirection = FinalDirection;
+	CalculateAngularVelocity(MovementDirection);
+	CachedPawn->AddMovementInput(MovementDirection,1.f);
+	
+	const float RotationThisFrame = AngularVelocity * DeltaTime;
+	CachedPawn->AddActorWorldRotation(FRotator(0.f, RotationThisFrame,0.f));
+	
 }
 
 void USurvivorSteering::CreatePathToTarget()
 {
-	CurrentPath.Empty();
-	CurrentPathPointIndex = 0;
+	SeekPath.Empty();
+	SeekPathPointIndex = 0;
 
 	if (!CachedPawn || !TargetActor)
 	{
 		return;
 	}
-	CurrentPath = CachedPawn->CalculatePath(TargetActor->GetActorLocation());
 
-	if (CurrentPath.Num() > 1)
+
+	SeekPath  = CachedPawn->CalculatePath(TargetActor->GetActorLocation());
+
+
+	if (SeekPath.Num() > 1)
 	{
-		CurrentPathPointIndex = 1;
+		SeekPathPointIndex = 1;
 	}
+}
+
+void USurvivorSteering::CalculateAngularVelocity(const FVector& DesiredDirection)
+{
+	if (!CachedPawn || DesiredDirection.IsNearlyZero())
+	{
+		AngularVelocity = 0.f;
+		return;
+	}
+	
+	const float CurrentYaw = CachedPawn->GetActorRotation().Yaw;
+	const float DesiredYaw = DesiredDirection.Rotation().Yaw;
+
+
+	const float DeltaYaw = FMath::FindDeltaAngleDegrees(CurrentYaw, DesiredYaw);
+	
+	
+	if (FMath::Abs(DeltaYaw) < 1.f)
+	{
+		AngularVelocity = 0.f;
+		return;
+	}
+
+
+	AngularVelocity = FMath::Sign(DeltaYaw) * MaxAngularVelocity;
+}
+
+FVector USurvivorSteering::FollowPath(
+	TArray<FVector>& Path,
+	int32& PathPointIndex)
+{
+	if (!CachedPawn)
+	{
+		return FVector::ZeroVector;
+	}
+
+	if (!Path.IsValidIndex(PathPointIndex))
+	{
+		return FVector::ZeroVector;
+	}
+
+
+	const FVector PawnLocation = CachedPawn->GetActorLocation();
+
+	const FVector PathPoint =Path[PathPointIndex];
+
+
+	const float Distance = FVector::Dist2D(PawnLocation, PathPoint);
+
+
+	if (Distance <= PathPointAcceptanceRadius)
+	{
+		++PathPointIndex;
+	}
+
+
+	if (!Path.IsValidIndex(PathPointIndex))
+	{
+		return FVector::ZeroVector;
+	}
+
+
+	FVector Direction =Path[PathPointIndex] - PawnLocation;
+	Direction.Z = 0.f;
+	return Direction.GetSafeNormal();
 }
 
 
