@@ -66,9 +66,9 @@ public:
 private:
 	
 	void DebugPrintKnownItems() const;
-	
 	void HandleZombiePerception(ABaseZombie* Zombie, const FAIStimulus& Stimulus);
-
+	bool HasKnownWeaponPickup() const;
+	
 	UPROPERTY()
 	TArray<TObjectPtr<ABaseItem>> KnownItems{};
 	
@@ -81,4 +81,9 @@ private:
 	UPROPERTY()
 	TArray<TObjectPtr<ABaseZombie>> VisibleEnemies{};
 
+	FTimerHandle EnemyThreatTimer;
+
+	float EnemyThreatMemoryTime{5.f};
+
+	
 };

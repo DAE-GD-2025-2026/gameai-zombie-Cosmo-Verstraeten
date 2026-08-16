@@ -404,6 +404,11 @@ int32 USurvivorInventoryLogic::FindUsableWeaponSlot() const
 {
 	if (!InventoryComponent)
 	{
+				GEngine->AddOnScreenDebugMessage(
+			-1,
+			2.f,
+			FColor::Red,
+			TEXT("NO INVENTORY COMPONENT"));
 		return INDEX_NONE;
 	}
 	
@@ -411,23 +416,74 @@ int32 USurvivorInventoryLogic::FindUsableWeaponSlot() const
 	
 	for (int32 Index = 0; Index < Items.Num(); ++Index)
 	{
-		AWeapon* Weapon = Cast<AWeapon>(Items[Index]);
-		
-		if (!Weapon)
+		if (IsUsableWeaponSlot(Index))
 		{
-			continue;
+			return Index;
 		}
-
-		if (Weapon->GetValue() <= 0)
-		{
-			continue;
-		}
-
-		return Index;
 	}
 
-
 	return INDEX_NONE;
+}
+
+bool USurvivorInventoryLogic::IsUsableWeaponSlot(int32 SlotIndex) const
+{
+	if (!InventoryComponent)
+	{
+		GEngine->AddOnScreenDebugMessage(
+			-1,
+			2.f,
+			FColor::Red,
+			TEXT("InventoryComponent is NULL"));
+
+		return false;
+	}
+	
+	const TArray<ABaseItem*>& Items = InventoryComponent->GetInventory();
+	if (!Items.IsValidIndex(SlotIndex))
+	{
+		return false;
+	}
+	ABaseItem* Item = Items[SlotIndex];
+
+
+	if (!Item)
+	{
+		GEngine->AddOnScreenDebugMessage(
+			-1,
+			2.f,
+			FColor::Yellow,
+			FString::Printf(
+				TEXT("Slot %d = EMPTY"),
+				SlotIndex));
+
+		return false;
+	}
+
+	AWeapon* Weapon = Cast<AWeapon>(Items[SlotIndex]);
+	if (!Weapon)
+	{
+		
+		GEngine->AddOnScreenDebugMessage(
+			-1,
+			2.f,
+			FColor::Yellow,
+			FString::Printf(
+				TEXT("Slot %d = %s, NOT WEAPON"),
+				SlotIndex,
+				*Item->GetName()));
+		return false;
+	}
+	
+	GEngine->AddOnScreenDebugMessage(
+	-1,
+	2.f,
+	FColor::Green,
+	FString::Printf(
+		TEXT("Slot %d = WEAPON %s | Ammo: %d"),
+			SlotIndex,
+			*Weapon->GetName(),
+			Weapon->GetValue()));
+	return Weapon->GetValue() > 0;
 }
 
 
@@ -471,4 +527,85 @@ bool USurvivorInventoryLogic::UseItemAndCleanup(int32 SlotIndex)
 	}
 
 	return true;
+}
+
+bool USurvivorInventoryLogic::ShouldUseMedkit() const
+{
+	if (!HealthComponent)
+	{
+		return false;
+	}
+
+	return HealthComponent->GetHealth() <= MedkitHealthThreshold;
+}
+
+bool USurvivorInventoryLogic::ShouldUseFood() const
+{
+	if (!StaminaComponent)
+	{
+		return false;
+	}
+
+	return StaminaComponent->GetCurrentStamina() <= FoodStaminaThreshold;
+}
+
+int32 USurvivorInventoryLogic::FindUsableMedkitSlot() const
+{
+	if (!InventoryComponent)
+	{
+		return INDEX_NONE;
+	}
+
+
+	const TArray<ABaseItem*>& Items = InventoryComponent->GetInventory();
+
+
+	for (int32 Index = 0; Index < Items.Num(); ++Index)
+	{
+		AMedkit* Medkit = Cast<AMedkit>(Items[Index]);
+		
+		if (!Medkit)
+		{
+			continue;
+		}
+		
+		if (Medkit->GetValue() <= 0)
+		{
+			continue;
+		}
+		
+		return Index;
+	}
+
+	return INDEX_NONE;
+}
+
+int32 USurvivorInventoryLogic::FindUsableFoodSlot() const
+{
+	if (!InventoryComponent)
+	{
+		return INDEX_NONE;
+	}
+	
+	const TArray<ABaseItem*>& Items = InventoryComponent->GetInventory();
+	
+	for (int32 Index = 0; Index < Items.Num(); ++Index)
+	{
+		AFood* Food =
+			Cast<AFood>(Items[Index]);
+		
+		if (!Food)
+		{
+			continue;
+		}
+		
+		if (Food->GetValue() <= 0)
+		{
+			continue;
+		}
+		
+		return Index;
+	}
+	
+	return INDEX_NONE;
 }

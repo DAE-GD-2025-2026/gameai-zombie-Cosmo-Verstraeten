@@ -2,11 +2,12 @@
 
 
 #include "StudentPerceptor.h"
-
+#include "TimerManager.h"
 #include "AIController.h"
 #include "BehaviorTree/BlackboardComponent.h"
 #include "Village/House/House.h"
 #include "Items/BaseItem.h"
+#include "Items/Weapon.h"
 #include "Zombies/BaseZombie.h"
 
 
@@ -55,7 +56,30 @@ void UStudentPerceptor::OnPerceptionUpdated(AActor* Actor, FAIStimulus Stimulus)
 	{
 		KnownItems.AddUnique(Item);
 
-		//DebugPrintKnownItems();
+		AWeapon* Weapon = Cast<AWeapon>(Item);
+		
+		if (Weapon && Weapon->GetValue() > 0)
+		{
+			APawn* Pawn = Cast<APawn>(GetOwner());
+			if (!Pawn)
+			{
+				return;
+			}
+			
+			AAIController* Controller =	Cast<AAIController>(Pawn->GetController());
+			if (!Controller)
+			{
+				return;
+			}
+			
+			UBlackboardComponent* Blackboard = Controller->GetBlackboardComponent();
+			if (!Blackboard)
+			{
+				return;
+			}
+
+			Blackboard->SetValueAsBool(TEXT("HasKnownWeapon"),true);
+		}
 	}
 	
 	APawn* Pawn = Cast<APawn>(GetOwner());
@@ -108,8 +132,27 @@ void UStudentPerceptor::ForgetItem(ABaseItem* Item)
 	{
 		return;
 	}
-
 	KnownItems.Remove(Item);
+	
+	APawn* Pawn = Cast<APawn>(GetOwner());
+	if (!Pawn)
+	{
+		return;
+	}
+	
+	AAIController* Controller = Cast<AAIController>(Pawn->GetController());
+	if (!Controller)
+	{
+		return;
+	}
+	
+	UBlackboardComponent* Blackboard = Controller->GetBlackboardComponent();
+	if (!Blackboard)
+	{
+		return;
+	}
+
+	Blackboard->SetValueAsBool(TEXT("HasKnownWeaponPickup"),HasKnownWeaponPickup());
 }
 
 
@@ -160,7 +203,9 @@ bool UStudentPerceptor::HasUnsearchedHouse() const
 	return false;
 }
 
-void UStudentPerceptor::HandleZombiePerception(ABaseZombie* Zombie, const FAIStimulus& Stimulus)
+void UStudentPerceptor::HandleZombiePerception(
+	ABaseZombie* Zombie,
+	const FAIStimulus& Stimulus)
 {
 	if (!Zombie)
 	{
@@ -168,7 +213,8 @@ void UStudentPerceptor::HandleZombiePerception(ABaseZombie* Zombie, const FAISti
 	}
 
 
-	APawn* Pawn = Cast<APawn>(GetOwner());
+	APawn* Pawn =
+		Cast<APawn>(GetOwner());
 
 	if (!Pawn)
 	{
@@ -176,7 +222,9 @@ void UStudentPerceptor::HandleZombiePerception(ABaseZombie* Zombie, const FAISti
 	}
 
 
-	AAIController* AIController = Cast<AAIController>(Pawn->GetController());
+	AAIController* AIController =
+		Cast<AAIController>(
+			Pawn->GetController());
 
 	if (!AIController)
 	{
@@ -184,18 +232,24 @@ void UStudentPerceptor::HandleZombiePerception(ABaseZombie* Zombie, const FAISti
 	}
 
 
-	UBlackboardComponent* Blackboard = AIController->GetBlackboardComponent();
+	UBlackboardComponent* Blackboard =
+		AIController->GetBlackboardComponent();
 
 	if (!Blackboard)
 	{
 		return;
 	}
-	
+
+
+	// Zombie entered perception.
 	if (Stimulus.WasSuccessfullySensed())
 	{
 		VisibleEnemies.AddUnique(Zombie);
 
-		Blackboard->SetValueAsBool(TEXT("HasVisibleZombie"),true);
+
+		Blackboard->SetValueAsBool(
+			TEXT("HasVisibleZombie"),
+			true);
 
 
 		GEngine->AddOnScreenDebugMessage(
@@ -207,11 +261,20 @@ void UStudentPerceptor::HandleZombiePerception(ABaseZombie* Zombie, const FAISti
 				*Zombie->GetName(),
 				VisibleEnemies.Num()));
 	}
+
+	// Zombie left perception.
 	else
 	{
 		VisibleEnemies.Remove(Zombie);
-		
-		Blackboard->SetValueAsBool(TEXT("HasVisibleZombie"),VisibleEnemies.Num() > 0);
+
+
+		const bool bHasVisibleZombie =
+			!VisibleEnemies.IsEmpty();
+
+
+		Blackboard->SetValueAsBool(
+			TEXT("HasVisibleZombie"),
+			bHasVisibleZombie);
 
 
 		GEngine->AddOnScreenDebugMessage(
@@ -224,3 +287,23 @@ void UStudentPerceptor::HandleZombiePerception(ABaseZombie* Zombie, const FAISti
 				VisibleEnemies.Num()));
 	}
 }
+
+bool UStudentPerceptor::HasKnownWeaponPickup() const
+{
+	for (const TObjectPtr<ABaseItem>& Item :KnownItems)
+	{
+		if (!IsValid(Item))
+		{
+			continue;
+		}
+
+		const AWeapon* Weapon =Cast<AWeapon>(Item.Get());
+		if (Weapon && Weapon->GetValue() > 0)
+		{
+			return true;
+		}
+	}
+
+	return false;
+}
+
